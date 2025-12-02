@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Video World Models</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-color: #050505;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --accent-color: #64ffda; /* Cyan Neon */
+            --text-primary: #e6f1ff;
+            --text-secondary: #8892b0;
+            --glow: 0 0 20px rgba(100, 255, 218, 0.3);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        h1, h2, h3 { font-family: 'Space Grotesk', sans-serif; color: #fff; }
+
+        /* --- Author Ticker --- */
+        .authors-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+
+        .ticker-pill {
+            position: relative;
+            width: 320px; 
+            height: 40px;
+            background: rgba(100, 255, 218, 0.1);
+            border: 1px solid var(--accent-color);
+            border-radius: 50px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 0 15px rgba(100, 255, 218, 0.2);
+            backdrop-filter: blur(5px);
+        }
+
+        .ticker-track {
+            display: flex;
+            white-space: nowrap;
+            width: max-content; 
+            animation: scroll-left 20s linear infinite; 
+        }
+
+        .ticker-name {
+            padding: 0 5px;
+            color: var(--accent-color);
+            font-weight: 700;
+            font-family: 'Space Grotesk', sans-serif;
+            display: flex;
+            align-items: center;
+            flex-shrink: 0; 
+        }
+
+        .ticker-name::after {
+            content: "★"; 
+            font-size: 0.8rem;
+            margin-left: 10px;
+            opacity: 0.5;
+        }
+
+        .ticker-name a {
+            color: inherit;
+            text-decoration: none;
+            border-bottom: none;
+            transition: all 0.3s ease;
+        }
+
+        .ticker-name a:hover {
+            text-shadow: 0 0 15px var(--accent-color);
+            opacity: 0.8;
+        }
+
+        .ticker-name a:visited {
+            color: inherit;
+        }
+
+        /* --- Contribution Note --- */
+        .contribution-note {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 5px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        
+        .contribution-symbol {
+            color: var(--accent-color);
+            font-weight: 700;
+            margin-right: 2px;
+            font-size: 0.8rem; 
+            opacity: 0.8;     
+            vertical-align: top;
+        }
+
+        .static-authors { color: var(--text-secondary); font-family: 'Inter', sans-serif; }
+        .static-authors a { color: #e6f1ff; text-decoration: none; transition: color 0.3s; }
+        .static-authors a:hover { color: var(--accent-color); }
+
+        .ticker-pill:hover .ticker-track { animation-play-state: paused; }
+        
+        @keyframes scroll-left {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* --- Drag Indicator --- */
+        .drag-indicator {
+            position: absolute;
+            top: 45%;
+            right: -35px; 
+            transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--accent-color);
+            padding: 15px 25px;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+            color: #fff;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            pointer-events: none;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+            z-index: 10;
+            box-shadow: 0 0 30px rgba(100, 255, 218, 0.2);
+            opacity: 1;
+        }
+
+        .drag-indicator.hidden {
+            opacity: 0;
+            transform: translateY(-50%) scale(0.9); 
+        }
+
+        .hand-icon {
+            font-size: 1.2rem;
+            color: var(--accent-color);
+            animation: swipe-hand 2s infinite ease-in-out;
+        }
+
+        @keyframes swipe-hand {
+            0% { transform: translateX(10px); opacity: 0.5; }
+            50% { transform: translateX(-10px); opacity: 1; }
+            100% { transform: translateX(10px); opacity: 0.5; }
+        }
+
+        /* --- Background --- */
+        .background-glow {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1;
+            background: radial-gradient(circle at 50% 50%, #1a1a2e 0%, #050505 70%);
+            overflow: hidden;
+        }
+
+        .blob {
+            position: absolute; width: 600px; height: 600px;
+            background: linear-gradient(180deg, rgba(76, 29, 149, 0.4) 0%, rgba(59, 130, 246, 0.4) 100%);
+            border-radius: 50%; filter: blur(80px); opacity: 0.6;
+            animation: move 20s infinite alternate;
+        }
+        
+        .blob:nth-child(2) {
+            right: -100px; top: -100px;
+            background: linear-gradient(180deg, rgba(236, 72, 153, 0.4) 0%, rgba(255, 100, 100, 0.4) 100%);
+            animation-duration: 25s;
+        }
+
+        @keyframes move {
+            from { transform: translate(0, 0) scale(1); }
+            to { transform: translate(50px, 50px) scale(1.1); }
+        }
+
+        /* --- Layout --- */
+        .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+        .section { margin-bottom: 80px; opacity: 0; transform: translateY(20px); transition: all 0.8s ease-out; }
+        .section.visible { opacity: 1; transform: translateY(0); }
+
+        /* --- Hero --- */
+        .hero {
+            min-height: 90vh; display: flex; flex-direction: column;
+            justify-content: center; align-items: center; text-align: center; padding-top: 60px;
+        }
+
+        .title {
+            font-size: 3.5rem; font-weight: 700; margin-bottom: 10px;
+            background: linear-gradient(90deg, #fff, #a5f3fc);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            text-shadow: 0px 0px 30px rgba(165, 243, 252, 0.3);
+        }
+
+        .affiliation {
+            font-size: 1.1rem; color: var(--accent-color); margin-bottom: 30px;
+            letter-spacing: 1px; text-transform: uppercase;
+        }
+        .affiliation a {
+            font-size: inherit; color: inherit; text-decoration: none; transition: all 0.3s ease;
+        }
+        .affiliation a:hover { text-shadow: 0 0 10px var(--accent-color); opacity: 0.8; }
+
+        .button-group { display: flex; gap: 15px; justify-content: center; margin-top: 0px; margin-bottom: 30px;}
+        .btn {
+            padding: 12px 25px; border-radius: 50px; background: rgba(255,255,255,0.1);
+            color: white; text-decoration: none; font-weight: 600;
+            backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s ease; display: flex; align-items: center; gap: 8px;
+        }
+        .btn:hover {
+            background: rgba(255,255,255,0.2); transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3); border-color: var(--accent-color);
+        }
+
+        /* --- General Cards --- */
+        .card {
+            background: var(--card-bg); border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(12px); border-radius: 16px; padding: 40px; margin-bottom: 30px;
+        }
+        .card h2 { font-size: 2rem; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+
+        /* --- Horizontal Video Scroll --- */
+        .video-gallery-container { 
+            margin-top: 10px; 
+            width: 100%; 
+            position: relative; 
+        }        
+        .video-gallery {
+            display: flex; overflow-x: auto; gap: 20px; padding-bottom: 5px;
+            scroll-behavior: smooth; cursor: grab;
+            -ms-overflow-style: none; scrollbar-width: none;
+            
+            /* REMOVED SNAP PROPERTIES FOR SMOOTHNESS */
+        }
+        .video-gallery::-webkit-scrollbar { display: none; }
+        .video-gallery.active { cursor: grabbing; scroll-behavior: auto; }
+
+        .video-card {
+            /* Mobile Default */
+            min-width: 60%;
+            flex-shrink: 0;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px; padding: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .video-card video { width: 100%; border-radius: 8px; display: block; }
+        .video-caption { text-align: center; font-size: 0.9rem; color: var(--text-secondary); margin-top: 8px; }
+        .caption { font-size: 0.9rem; color: var(--text-secondary); margin-top: 10px; text-align: center; }
+
+        /* --- Interactive Grid --- */
+        .grid-container {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 25px; margin-top: 30px;
+        }
+        .grid-item {
+            background: rgba(0,0,0,0.3); border-radius: 12px; padding: 15px;
+            border: 1px solid rgba(255,255,255,0.05); transition: transform 0.3s;
+        }
+        .grid-item:hover { transform: translateY(-5px); border-color: rgba(255,255,255,0.2); }
+        
+        .video-wrapper {
+            position: relative; width: 100%; border-radius: 12px; overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4); margin-bottom: 10px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .video-wrapper video { width: 100%; display: block; }
+
+        pre {
+            background: #0a0a0a; padding: 20px; border-radius: 8px; overflow-x: auto;
+            color: #d4d4d4; border: 1px solid rgba(255,255,255,0.1);
+        }
+        footer { text-align: center; padding: 50px 0; color: var(--text-secondary); font-size: 0.9rem; }
+
+        /* --- SIZE OVERRIDES (Place at bottom) --- */
+        
+        /* Desktop Video Card Size */
+        @media (min-width: 768px) {
+            .video-card {
+                /* FORCE SIZE: 500px */
+                width: 500px !important;
+                min-width: 500px !important;
+                max-width: 500px !important;
+            }
+            .title { font-size: 3.5rem; }
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 768px) {
+            .title { font-size: 2.2rem; }
+            .grid-container { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="background-glow">
+        <div class="blob"></div>
+        <div class="blob"></div>
+    </div>
+
+    <div class="container">
+        
+        <div class="hero section visible">
+            <h1 class="title">Interactive Video World Model with Long-Horizon Memory</h1>
+            
+            <div class="authors-container">
+                <div class="ticker-pill" title="Equal Contribution">
+                    <div class="ticker-track">
+                        <span class="ticker-name"><a href="https://chongjiange.github.io/" target="_blank">Chongjian Ge</a></span>
+                        <span class="ticker-name"><a href="https://yiconghong.me" target="_blank">Yicong Hong<sup>†</sup></a></span>
+                        <span class="ticker-name"><a href="https://yiqunmei.net/" target="_blank">Yiqun Mei</a></span>
+                        <span class="ticker-name"><a href="https://chongjiange.github.io/" target="_blank">Chongjian Ge</a></span>
+                        <span class="ticker-name"><a href="https://yiconghong.me" target="_blank">Yicong Hong<sup>†</sup></a></span>
+                        <span class="ticker-name"><a href="https://yiqunmei.net/" target="_blank">Yiqun Mei</a></span>
+                        <span class="ticker-name"><a href="https://chongjiange.github.io/" target="_blank">Chongjian Ge</a></span>
+                        <span class="ticker-name"><a href="https://yiconghong.me" target="_blank">Yicong Hong<sup>†</sup></a></span>
+                        <span class="ticker-name"><a href="https://yiqunmei.net/" target="_blank">Yiqun Mei</a></span>
+                        <span class="ticker-name"><a href="https://chongjiange.github.io/" target="_blank">Chongjian Ge</a></span>
+                        <span class="ticker-name"><a href="https://yiconghong.me" target="_blank">Yicong Hong<sup>†</sup></a></span>
+                        <span class="ticker-name"><a href="https://yiqunmei.net/" target="_blank">Yiqun Mei</a></span>
+                    </div>
+                </div>
+
+                <span class="static-authors">
+                    <a href="https://twizwei.github.io/" target="_blank">Yiran Xu</a>, 
+                    <a href="https://yzhou359.github.io/" target="_blank">Yang Zhou</a>,
+                    <a href="https://sai-bi.github.io/" target="_blank">Sai Bi</a>,
+                    <a href="https://yannickhold.com/" target="_blank">Yannick Hold-Geoffroy</a>,
+                </span>
+
+                <span class="static-authors">
+                    <a href="https://mikeroberts3000.github.io/" target="_blank">Mike Roberts</a>,
+                    <a href="https://techmatt.github.io/" target="_blank">Matthew Fisher</a>,
+                    <a href="https://research.adobe.com/person/eli-shechtman/" target="_blank">Eli Shechtman</a>,
+                    <a href="http://www.kalyans.org/" target="_blank">Kalyan Sunkavalli</a>,
+                    <a href="https://pages.cs.wisc.edu/~fliu/" target="_blank">Feng Liu</a>,
+                    <a href="https://zhengqili.github.io/" target="_blank">Zhengqi Li</a>,
+                    <a href="https://www.cs.unc.edu/~airsplay/" target="_blank">Hao Tan</a>
+                </span>
+            </div>
+
+            <div class="contribution-note">
+                <span class="contribution-symbol">★</span> First authors, equal technical contribution &nbsp;&nbsp;&nbsp;
+                <span class="contribution-symbol">†</span> Project Lead
+            </div>
+            
+            <div class="affiliation">
+                <a href="https://research.adobe.com/" target="_blank">Adobe Research</a>
+            </div>
+
+            <div class="button-group">
+                <a href="#" class="btn"><i class="fas fa-file-pdf"></i> Tech Report</a>
+                <!-- <a href="#" class="btn"><i class="fab fa-youtube"></i> Video</a>
+                <a href="#" class="btn"><i class="fab fa-github"></i> Code</a> -->
+            </div>
+
+            <div class="video-gallery-container">
+                <div class="drag-indicator">
+                    <i class="fas fa-hand-pointer hand-icon"></i>
+                    <span>Drag to Explore</span>
+                </div>
+                <div class="video-gallery">
+                     <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/outdoor/AdobeStock_246311585.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/outdoor/AdobeStock_165907328.mp4" type="video/mp4">
+                        </video>
+                     </div>
+                     <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/outdoor/AdobeStock_953500009.mp4" type="video/mp4">
+                        </video>
+                    </div>    
+                     <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/outdoor/AdobeStock_496778502.mp4" type="video/mp4">
+                        </video>
+                     </div>
+                     <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/outdoor/AdobeStock_258945213.mp4" type="video/mp4">
+                        </video>
+                     </div>                                       
+                    <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/outdoor/AdobeStock_47597968.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/outdoor/AdobeStock_82570608.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                     <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/outdoor/AdobeStock_107343330.mp4" type="video/mp4">
+                        </video>
+                     </div>                    
+                    <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/outdoor/AdobeStock_75749867.mp4" type="video/mp4">
+                        </video>
+                    </div>        
+                     <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/outdoor/AdobeStock_123321134.mp4" type="video/mp4">
+                        </video>
+                     </div>                                
+                </div>
+                </div>
+
+            <div class="video-gallery-container">
+                <div class="drag-indicator">
+                    <i class="fas fa-hand-pointer hand-icon"></i>
+                    <span>Drag to Explore</span>
+                </div>
+                <div class="video-gallery">
+                    <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/indoor/AdobeStock_102343384.mp4" type="video/mp4">
+                        </video>
+                     </div> 
+                    <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/indoor/AdobeStock_615577979.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/indoor/AdobeStock_657172410.mp4" type="video/mp4">
+                        </video>
+                    </div>   
+                    <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/indoor/AdobeStock_167428985.mp4" type="video/mp4">
+                        </video>
+                     </div>
+                     <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/indoor/AdobeStock_236128392.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                     <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/indoor/AdobeStock_439304758.mp4" type="video/mp4">
+                        </video>
+                    </div>                                                          
+                </div>
+                <p class="caption">Interactive world exploration given arbitrary starting image.</p>
+            </div>
+
+        </div>
+
+        <div class="section card">
+            <h3>Abstract</h3>
+            <p>
+                We present a novel framework for interactive world models that allows users to... 
+                (Paste your abstract here). Unlike previous approaches that struggle with temporal consistency, 
+                our method leverages a novel spatial-temporal attention mechanism to ensure...
+            </p>
+        </div>
+
+        <div class="section" style="margin-bottom: 30px;">
+            <h2 style="text-align: center; margin-bottom: 10px;">Overview</h2>
+            <div class="card" style="padding: 10px; background: rgba(0,0,0,0.2); margin-bottom: 10px;">
+                <img src="figures/overview.png" alt="Architecture" style="width: 100%; border-radius: 8px;">
+            </div>
+            <p class="caption">Overview of our long-video distillation pipeline with compressed memory. A 20-second bidirectional teacher is distilled into a fast autoregressive student model using self-forcing, and memory-efficient training is enabled through replayed back-propagation. Please see our tech report for more details.</p>
+        </div>
+
+        <div class="section">
+            <h2 style="text-align: center; margin-top: 10px; margin-bottom: 10px;">Walking into Paintings</h2>
+            <!-- <p style="text-align: center; color: var(--text-secondary); margin-bottom: 30px;">
+                These videos are generated in real-time. Hover to play (desktop) or tap to play (mobile).
+            </p> -->
+            
+            <div class="video-gallery-container">
+                <div class="drag-indicator">
+                    <i class="fas fa-hand-pointer hand-icon"></i>
+                    <span>Drag to Explore</span>
+                </div>
+                <div class="video-gallery">
+                    <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/arts/AdobeStock_808191191.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/arts/AdobeStock_717340720.mp4" type="video/mp4">
+                        </video>
+                    </div>                    
+                    <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/arts/AdobeStock_929474251.mp4" type="video/mp4">
+                        </video>
+                    </div> 
+                    <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/arts/AdobeStock_179433447.mp4" type="video/mp4">
+                        </video>
+                    </div>                       
+                    <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/arts/AdobeStock_565061279.mp4" type="video/mp4">
+                        </video>
+                    </div>   
+                     <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/arts/AdobeStock_125302858.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/arts/AdobeStock_590713778.mp4" type="video/mp4">
+                        </video>
+                    </div>                                                                            
+                </div>
+                <!-- <p class="caption">Interactive world exploration given arbitrary starting image.</p> -->
+            </div>
+
+            <h2 style="text-align: center; margin-top: 30px; margin-bottom: 10px;">Diverse Art Styles</h2>
+            <div class="video-gallery-container">
+                <div class="drag-indicator">
+                    <i class="fas fa-hand-pointer hand-icon"></i>
+                    <span>Drag to Explore</span>
+                </div>
+                <div class="video-gallery">
+                    <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/arts/AdobeStock_279163757.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/arts/AdobeStock_838752734.mp4" type="video/mp4">
+                        </video>
+                    </div>                
+                    <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/arts/AdobeStock_1550864449.mp4" type="video/mp4">
+                        </video>
+                    </div> 
+                    <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/arts/AdobeStock_637327994.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/arts/AdobeStock_1745257700.mp4" type="video/mp4">
+                        </video>
+                    </div> 
+                    <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/arts/AdobeStock_1792002675.mp4" type="video/mp4">
+                        </video>
+                    </div>                       
+                </div>
+            </div>
+
+            <h2 style="text-align: center; margin-top: 30px; margin-bottom: 10px;">Long-term Memory</h2>
+            <div class="video-gallery-container">
+                <div class="drag-indicator">
+                    <i class="fas fa-hand-pointer hand-icon"></i>
+                    <span>Drag to Explore</span>
+                </div>
+                <div class="video-gallery">
+                    <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/memory/AdobeStock_196106757.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/memory/AdobeStock_459349559.mp4" type="video/mp4">
+                        </video>
+                    </div>                     
+                    <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/memory/AdobeStock_260794563.mp4" type="video/mp4">
+                        </video>
+                    </div> 
+                    <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/memory/AdobeStock_64646975.mp4" type="video/mp4">
+                        </video>
+                    </div>            
+                    <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/memory/AdobeStock_1304224584.mp4" type="video/mp4">
+                        </video>
+                    </div>                                    
+                    <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/memory/AdobeStock_236926389.mp4" type="video/mp4">
+                        </video>
+                    </div>       
+                    <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/memory/AdobeStock_798385600.mp4" type="video/mp4">
+                        </video>
+                    </div>   
+                    <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/memory/AdobeStock_259302665.mp4" type="video/mp4">
+                        </video>
+                    </div>                                                        
+                </div>
+            </div>
+            
+            <h2 style="text-align: center; margin-top: 30px; margin-bottom: 10px;">Multi-Key Control</h2>
+            <div class="video-gallery-container">
+                <div class="drag-indicator">
+                    <i class="fas fa-hand-pointer hand-icon"></i>
+                    <span>Drag to Explore</span>
+                </div>
+                <div class="video-gallery">
+                    <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/multi_keys/AdobeStock_208950315.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/multi_keys/AdobeStock_1532975949.mp4" type="video/mp4">
+                        </video>
+                    </div>                     
+                    <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/multi_keys/AdobeStock_1014914388_0.mp4" type="video/mp4">
+                        </video>
+                    </div> 
+                    <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/multi_keys/AdobeStock_1570646172.mp4" type="video/mp4">
+                        </video>
+                    </div>                    
+                    <div class="video-card">
+                        <video autoplay loop muted playsinline>
+                            <source src="videos/multi_keys/AdobeStock_1073959182.mp4" type="video/mp4">
+                        </video>
+                    </div>                    
+                </div>
+            </div>
+
+            <!-- <div class="grid-container">
+                <div class="grid-item">
+                    <div class="video-wrapper">
+                        <video controls playsinline>
+                            <source src="videos/test.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="caption">
+                        <strong>Minecraft World</strong><br>
+                        "Navigate through a dense forest..."
+                    </div>
+                </div>
+
+                <div class="grid-item">
+                    <div class="video-wrapper">
+                        <video controls playsinline>
+                            <source src="videos/test.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="caption">
+                        <strong>Driving Simulator</strong><br>
+                        "Drive down a rainy highway at night..."
+                    </div>
+                </div>
+                
+                <div class="grid-item">
+                    <div class="video-wrapper">
+                        <video controls playsinline>
+                            <source src="videos/test.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="caption">
+                        <strong>Robotics</strong><br>
+                        "A robotic arm picking up a red cube..."
+                    </div>
+                </div>
+
+                <div class="grid-item">
+                    <div class="video-wrapper">
+                        <video controls playsinline>
+                            <source src="videos/test.mp4" type="video/mp4">
+                        </video>
+                    </div>
+                    <div class="caption">
+                        <strong>Platformer Game</strong><br>
+                        "A 2D character jumping over obstacles..."
+                    </div>
+                </div>
+            </div> -->
+        </div>
+
+        <div class="section card">
+            <h2>Citation</h2>
+            <pre><code>@article{InteractiveWorldModels2025,
+  author    = {Your Name, Co-Author, Advisor},
+  title     = {Interactive Video World Models},
+  journal   = {CVPR/ICCV/ECCV},
+  year      = {2025}
+}</code></pre>
+        </div>
+
+        <footer>
+            <p>Adobe Research</p>
+        </footer>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            document.querySelectorAll('.section').forEach(section => {
+                observer.observe(section);
+            });
+            
+            // --- FIXED: Drag to Scroll Logic (Applies to ALL galleries) ---
+            const galleries = document.querySelectorAll('.video-gallery');
+
+            galleries.forEach(slider => {
+                // --- SCROLL TO CENTER 2nd VIDEO ---
+                const cards = slider.querySelectorAll('.video-card');
+                if (cards.length > 1) {
+                    const secondCard = cards[1];
+                    // Calculate offset: 
+                    // (2nd Card Center) - (Container Center)
+                    const offset = secondCard.offsetLeft - (slider.clientWidth / 2) + (secondCard.clientWidth / 2);
+                    
+                    // Force the scroll instantly
+                    slider.scrollLeft = offset;
+                }
+                // ----------------------------------
+
+                let isDown = false;
+                let startX;
+                let scrollLeft;
+
+                // Find the specific indicator for THIS slider
+                const container = slider.parentElement;
+                const indicator = container.querySelector('.drag-indicator');
+
+                slider.addEventListener('mousedown', (e) => {
+                    isDown = true;
+                    slider.classList.add('active');
+                    
+                    if (indicator) {
+                        indicator.classList.add('hidden');
+                    }
+                    
+                    startX = e.pageX - slider.offsetLeft;
+                    scrollLeft = slider.scrollLeft;
+                });
+
+                slider.addEventListener('mouseleave', () => {
+                    isDown = false;
+                    slider.classList.remove('active');
+                });
+
+                slider.addEventListener('mouseup', () => {
+                    isDown = false;
+                    slider.classList.remove('active');
+                });
+
+                slider.addEventListener('mousemove', (e) => {
+                    if (!isDown) return;
+                    e.preventDefault();
+                    const x = e.pageX - slider.offsetLeft;
+                    const walk = (x - startX) * 2;
+                    slider.scrollLeft = scrollLeft - walk;
+                });
+            });
+        });
+    </script>
+</body>
+</html>
