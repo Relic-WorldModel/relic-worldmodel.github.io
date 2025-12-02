@@ -288,6 +288,34 @@
         }
         .video-wrapper video { width: 100%; display: block; }
 
+        /* --- NEW: 3-Column Static Grid Styles --- */
+        .static-grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* Forces 3 columns */
+            gap: 5px;
+            margin-top: 15px;
+            margin-bottom: 10px;
+        }
+
+        .static-grid-item {
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            padding: 10px;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: transform 0.3s;
+        }
+
+        .static-grid-item:hover {
+            transform: translateY(-3px);
+            border-color: rgba(255,255,255,0.2);
+        }
+
+        .static-grid-item video {
+            width: 100%;
+            border-radius: 8px;
+            display: block;
+        }
+
         pre {
             background: #0a0a0a; padding: 20px; border-radius: 8px; overflow-x: auto;
             color: #d4d4d4; border: 1px solid rgba(255,255,255,0.1);
@@ -311,6 +339,7 @@
         @media (max-width: 768px) {
             .title { font-size: 2.2rem; }
             .grid-container { grid-template-columns: 1fr; }
+            .static-grid-3 { grid-template-columns: 1fr; } /* Stack on mobile */
         }
     </style>
 </head>
@@ -373,9 +402,7 @@
 
             <div class="button-group">
                 <a href="#" class="btn"><i class="fas fa-file-pdf"></i> Tech Report</a>
-                <!-- <a href="#" class="btn"><i class="fab fa-youtube"></i> Video</a>
-                <a href="#" class="btn"><i class="fab fa-github"></i> Code</a> -->
-            </div>
+                </div>
 
             <div class="video-gallery-container">
                 <div class="drag-indicator">
@@ -480,7 +507,6 @@
 
         <h2 style="text-align: center; margin-bottom: 20px; margin-top: -40px">Abstract</h2>
         <div class="section card" style="margin-top: 10px;">
-            <!-- <h3>Abstract</h3> -->
             <p>
                 We present RELIC, an interactive video world model that enables long-duration exploration of
                 arbitrary scenes from a single image. Building upon the Self-Forcing paradigm, RELIC addresses two
@@ -509,10 +535,6 @@
 
         <div class="section">
             <h2 style="text-align: center; margin-top: 10px; margin-bottom: 10px;">Walking into Paintings</h2>
-            <!-- <p style="text-align: center; color: var(--text-secondary); margin-bottom: 30px;">
-                These videos are generated in real-time. Hover to play (desktop) or tap to play (mobile).
-            </p> -->
-            
             <div class="video-gallery-container">
                 <div class="drag-indicator">
                     <i class="fas fa-hand-pointer hand-icon"></i>
@@ -555,8 +577,7 @@
                         </video>
                     </div>                                                                            
                 </div>
-                <!-- <p class="caption">Interactive world exploration given arbitrary starting image.</p> -->
-            </div>
+                </div>
 
             <h2 style="text-align: center; margin-top: 30px; margin-bottom: 10px;">Diverse Art Styles</h2>
             <div class="video-gallery-container">
@@ -683,56 +704,63 @@
                 </div>
             </div>
 
-            <!-- <div class="grid-container">
-                <div class="grid-item">
-                    <div class="video-wrapper">
-                        <video controls playsinline>
-                            <source src="videos/test.mp4" type="video/mp4">
-                        </video>
-                    </div>
-                    <div class="caption">
-                        <strong>Minecraft World</strong><br>
-                        "Navigate through a dense forest..."
-                    </div>
+            <h2 style="text-align: center; margin-top: 30px; margin-bottom: 0px;">Comparison with Others</h2>
+            <div class="static-grid-3">
+                <div class="static-grid-item">
+                    <div class="caption" style="margin-top: 0px; margin-bottom: 5px;">RELIC (Ours)</div>
+                    <video autoplay loop muted playsinline>
+                        <source src="https://github.com/Relic-WorldModel/relic-worldmodel.github.io/releases/download/videos-0.1/compare_ours_AdobeStock_196106757.mp4" type="video/mp4">
+                    </video>
+                </div>
+                <div class="static-grid-item">
+                    <div class="caption" style="margin-top: 0px; margin-bottom: 5px;">Matrix-Game-2.0</div>
+                    <video autoplay loop muted playsinline>
+                        <source src="https://github.com/Relic-WorldModel/relic-worldmodel.github.io/releases/download/videos-0.1/compare_matrix_AdobeStock_196106757.mp4" type="video/mp4">
+                    </video>
+                </div>
+                <div class="static-grid-item">
+                    <div class="caption" style="margin-top: 0px; margin-bottom: 5px;">Hunyuan-GameCraft-1.0</div>
+                    <video autoplay loop muted playsinline>
+                        <source src="https://github.com/Relic-WorldModel/relic-worldmodel.github.io/releases/download/videos-0.1/compare_hunyuan_AdobeStock_196106757.mp4" type="video/mp4">
+                    </video>
                 </div>
 
-                <div class="grid-item">
-                    <div class="video-wrapper">
-                        <video controls playsinline>
-                            <source src="videos/test.mp4" type="video/mp4">
-                        </video>
-                    </div>
-                    <div class="caption">
-                        <strong>Driving Simulator</strong><br>
-                        "Drive down a rainy highway at night..."
-                    </div>
+                <div class="static-grid-item">
+                    <video autoplay loop muted playsinline>
+                        <source src="https://github.com/Relic-WorldModel/relic-worldmodel.github.io/releases/download/videos-0.1/compare_ours_AdobeStock_798385600.mp4" type="video/mp4">
+                    </video>
                 </div>
-                
-                <div class="grid-item">
-                    <div class="video-wrapper">
-                        <video controls playsinline>
-                            <source src="videos/test.mp4" type="video/mp4">
-                        </video>
-                    </div>
-                    <div class="caption">
-                        <strong>Robotics</strong><br>
-                        "A robotic arm picking up a red cube..."
-                    </div>
+                <div class="static-grid-item">
+                    <video autoplay loop muted playsinline>
+                        <source src="https://github.com/Relic-WorldModel/relic-worldmodel.github.io/releases/download/videos-0.1/compare_matrix_AdobeStock_798385600.mp4" type="video/mp4">
+                    </video>
+                </div>
+                <div class="static-grid-item">
+                    <video autoplay loop muted playsinline>
+                        <source src="https://github.com/Relic-WorldModel/relic-worldmodel.github.io/releases/download/videos-0.1/compare_hunyuan_AdobeStock_798385600.mp4" type="video/mp4">
+                    </video>
                 </div>
 
-                <div class="grid-item">
-                    <div class="video-wrapper">
-                        <video controls playsinline>
-                            <source src="videos/test.mp4" type="video/mp4">
-                        </video>
-                    </div>
-                    <div class="caption">
-                        <strong>Platformer Game</strong><br>
-                        "A 2D character jumping over obstacles..."
-                    </div>
+                <div class="static-grid-item">
+                    <video autoplay loop muted playsinline>
+                        <source src="https://github.com/Relic-WorldModel/relic-worldmodel.github.io/releases/download/videos-0.1/compare_ours_AdobeStock_260794563.mp4" type="video/mp4">
+                    </video>
+                    <!-- <div class="caption">Desert Road</div> -->
                 </div>
-            </div> -->
-        </div>
+                <div class="static-grid-item">
+                    <video autoplay loop muted playsinline>
+                        <source src="https://github.com/Relic-WorldModel/relic-worldmodel.github.io/releases/download/videos-0.1/compare_matrix_AdobeStock_260794563.mp4" type="video/mp4">
+                    </video>
+                    <!-- <div class="caption">Snowy Mountains</div> -->
+                </div>
+                <div class="static-grid-item">
+                    <video autoplay loop muted playsinline>
+                        <source src="https://github.com/Relic-WorldModel/relic-worldmodel.github.io/releases/download/videos-0.1/compare_hunyuan_AdobeStock_260794563.mp4" type="video/mp4">
+                    </video>
+                    <!-- <div class="caption">Coastal Drive</div> -->
+                </div>
+            </div>
+            </div>
 
         <div class="section card">
             <h2>Citation</h2>
