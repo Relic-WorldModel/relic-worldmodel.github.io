@@ -508,19 +508,23 @@
         <h2 style="text-align: center; margin-bottom: 20px; margin-top: -40px">Abstract</h2>
         <div class="section card" style="margin-top: 10px;">
             <p>
-            We present RELIC, an interactive video world model that enables long-duration exploration of arbitrary scenes
-            from a single image. Building upon the Self-Forcing paradigm, RELIC addresses two central challenges
-            in autoregressive world modeling: achieving real-time long-horizon streaming and maintaining consistent
-            spatial memory under large camera motions. To enable efficient long-term memory retrieval, we represent the
-            model's memory as highly compressed historical latents encoded with relative and absolute camera poses and
-            stored within the KV cache. This compact, position-aware memory supports implicit 3D-consistent content
-            retrieval and enforces spatial consistency with minimal computational overhead. In parallel, we fine-tune the
-            bidirectional teacher model to generate 20-second sequences, providing strong supervision of long-horizon
-            content with drastic viewpoint changes. To make full-horizon distillation feasible, we further introduce a
-            replayed backpropagation scheme that computes distribution-matching losses over the entire student rollout at
-            practical memory cost. Built as a 14B-parameter model and trained with modest computation, RELIC achieves
-            real-time generation at 16 FPS while maintaining precise action following, long-horizon streaming, and robust
-            spatial memory retrieval, establishing a strong foundation for interactive world modeling.
+            A truly interactive world model requires three key ingredients: real-time long-horizon streaming, consistent
+            spatial memory, and precise user control. However, most existing approaches address only one of these aspects
+            in isolation, as achieving all three simultaneously is highly challenging—for example, long-term memory
+            mechanisms often degrade real-time performance. In this work, we present RELIC, a unified framework
+            that tackles these three challenges altogether. Given a single image and a text description, RELIC enables
+            memory-aware, long-duration exploration of arbitrary scenes in real time. Built upon recent autoregressive
+            video-diffusion distillation techniques, our model represents long-horizon memory using highly compressed
+            historical latent tokens encoded with both relative actions and absolute camera poses within the KV cache.
+            This compact, camera-aware memory structure supports implicit 3D-consistent content retrieval and enforces
+            long-term coherence with minimal computational overhead. In parallel, we fine-tune a bidirectional teacher
+            video model to generate sequences beyond its original 5-second training horizon, and transform it into a causal
+            student generator using a new memory-efficient self-forcing paradigm that enables full-context distillation
+            over long-duration teacher as well as long student self-rollouts. Implemented as a 14B-parameter model
+            and trained on a curated Unreal Engine–rendered dataset, RELIC achieves real-time generation at 16 FPS
+            while demonstrating more accurate action following, more stable long-horizon streaming, and more robust
+            spatial-memory retrieval compared with prior work. These capabilities establish RELIC as a strong foundation
+            for the next generation of interactive world modeling.
             </p>
         </div>
 
@@ -704,6 +708,7 @@
             </div>
 
             <h2 style="text-align: center; margin-top: 30px; margin-bottom: 0px;">Comparison with Others</h2>
+            <p class="caption">We compare RELIC with recent video world models by applying an identical control sequence to all models (shown in the first column) to evaluate their action-following capability and long-term memory.</p>
             <div class="static-grid-3">
                 <div class="static-grid-item">
                     <div class="caption" style="margin-top: 0px; margin-bottom: 5px;">RELIC (Ours)</div>
